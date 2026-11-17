@@ -16,7 +16,7 @@ spring:
             - id: backend-api
               uri: ${BACKEND_URL:http://localhost:8083}
               predicates:
-                - Path=/api/**
+                - Path=/api/v1/**
 
 management:
   endpoints:

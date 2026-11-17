@@ -29,7 +29,7 @@ class UserIdHeaderTests {
     @BeforeAll
     static void startBackend() throws IOException {
         backend = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
-        backend.createContext("/api/echo", exchange -> {
+        backend.createContext("/api/v1/echo", exchange -> {
             String userId = exchange.getRequestHeaders().getFirst("X-User-Id");
             byte[] body = ("user=" + userId).getBytes(StandardCharsets.UTF_8);
             exchange.sendResponseHeaders(200, body.length);
@@ -51,19 +51,19 @@ class UserIdHeaderTests {
 
     @Test
     void rejectsMissingToken() {
-        client.get().uri("/api/echo").exchange().expectStatus().isUnauthorized();
+        client.get().uri("/api/v1/echo").exchange().expectStatus().isUnauthorized();
     }
 
     @Test
     void rejectsTokenWithoutServiceScope() {
         client.mutateWith(mockJwt().authorities(() -> "SCOPE_other"))
-                .get().uri("/api/echo").exchange().expectStatus().isForbidden();
+                .get().uri("/api/v1/echo").exchange().expectStatus().isForbidden();
     }
 
     @Test
     void stripsUserIdWithoutActAsUserScope() {
         client.mutateWith(mockJwt().authorities(() -> "SCOPE_interview-copilot/service"))
-                .get().uri("/api/echo").header("X-User-Id", "forged").exchange()
+                .get().uri("/api/v1/echo").header("X-User-Id", "forged").exchange()
                 .expectStatus().isOk().expectBody(String.class).isEqualTo("user=null");
     }
 
@@ -71,7 +71,7 @@ class UserIdHeaderTests {
     void forwardsUserIdWithActAsUserScope() {
         client.mutateWith(mockJwt().authorities(() -> "SCOPE_interview-copilot/service",
                         () -> "SCOPE_interview-copilot/act-as-user"))
-                .get().uri("/api/echo").header("X-User-Id", "u1").exchange()
+                .get().uri("/api/v1/echo").header("X-User-Id", "u1").exchange()
                 .expectStatus().isOk().expectBody(String.class).isEqualTo("user=u1");
     }
 }
